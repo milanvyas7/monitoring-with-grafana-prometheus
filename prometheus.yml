@@ -1,0 +1,99 @@
+global:
+  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  #external_labels:
+  #    monitor: 'example'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - "alert.rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    scrape_timeout: 5s
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: 'node'
+    # If prometheus-node-exporter is installed, grab stats about the local
+    # machine by default.
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/node_targets.yml
+
+  - job_name: "WMI_Exporter"
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/win_targets.yml
+
+  - job_name: "snmp_exporter"
+    scrape_interval: 5s
+    scrape_timeout: 5s
+    metrics_path: /snmp
+    params:
+      module: [if_mib]
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/snmp_targets.yml
+    relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: snmp-exporter:9116
+
+  - job_name: 'blackbox'
+    scrape_interval: 1m
+    scrape_timeout: 1m
+    metrics_path: /probe
+    params:
+      module: [http_2xx] # Look for a HTTP 200 response.
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/blackbox_targets.yml
+    relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: blackbox_exporter:9115
+
+  - job_name: 'ping_targets'
+    metrics_path: /probe
+    params:
+      module: [icmp_ping]
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/file_sd/ping_targets.yml
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115

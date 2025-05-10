@@ -1,0 +1,77 @@
+groups:
+ - name: InstanceDown
+   rules:
+     - alert: InstanceDown
+       expr: up == 0
+       for: 1m
+       labels:
+         severity: critical
+       annotations:
+         summary: "Instance {{ $labels.instance }} down"
+         description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
+
+ - name: Linux Server Rules
+   rules: 
+    - alert: HostOutOfMemory
+      expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Node memory is filling up (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: HostOutOfDiskSpace
+      expr: (node_filesystem_avail_bytes * 100) / node_filesystem_size_bytes < 10 and ON (instance, device, mountpoint) node_filesystem_readonly == 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Disk is almost full (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: HostHighCpuLoad
+      expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+ - name: Windows Server Rules
+   rules: 
+    - alert: Win Server CPU > 90%
+      expr: 100 - (avg by (instance) (rate(windows_cpu_time_total{mode="idle"}[2m])) * 100) > 80
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "CPU Usage is more than 80%\n  VALUE = {{ $value }}\n"
+    - alert: Win Server RAM > 90%
+      expr: 100 - ((windows_os_physical_memory_free_bytes / windows_cs_physical_memory_bytes) * 100) > 90
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Memory usage is more than 90%\n  VALUE = {{ $value }}\n"
+    - alert: Win Server Disk > 90%
+      expr: 100.0 - 100 * ((windows_logical_disk_free_bytes / 1024 / 1024 ) / (windows_logical_disk_size_bytes / 1024 / 1024)) > 90
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Disk usage is more than 90%\n  VALUE = {{ $value }}\n"
+
+ - name: Blackbox rules
+   rules:
+    - alert: SSL Certificate Expiring
+      expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 15
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        description: "TLS certificate will expire in {{ $value | humanizeDuration }}"
+
+    - alert: Website Down
+      expr: probe_success == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Website {{ $labels.instance }} down"
