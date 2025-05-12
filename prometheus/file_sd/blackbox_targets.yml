@@ -1,0 +1,5 @@
+# Add your targets in below format
+#- targets: ['https://google.com']
+#  labels:
+#    name: 'Global'
+#    site: 'Cloud'

@@ -91,6 +91,14 @@ A fully automated, containerized monitoring stack for **Linux/Windows servers, n
 ├── alertmanager/
 │   └── alertmanager.yml
 ├── portainer-data/
+├── grafana/
+│   ├── data/                            ← Persistent Grafana data (UID 472)
+│   ├── dashboards/                      ← Dashboard JSON files
+│   └── provisioning/
+│       ├── datasources/
+│       │   └── datasource.yml
+│       └── dashboards/
+│           └── dashboard.yml
 ├── nginx/
 │   ├── conf.d/
 │   │   ├── nginx-grafana.conf

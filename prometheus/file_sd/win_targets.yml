@@ -1,0 +1,9 @@
+# Add your targets in below format
+# - targets: ['10.0.2.11:9182']
+#   labels:
+#     name: 'VM1 HOST'
+#     site: 'VM'
+- targets: ['192.168.1.6:9182']
+  labels:
+    name: 'VM2 HOST'
+    site: 'VM'

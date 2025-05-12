@@ -1,0 +1,9 @@
+# Add your targets in below format
+# - targets: ['192.168.1.1']
+#   labels:
+#     name: 'Wifi Router'
+#     site: 'Home'
+# - targets: ['192.168.1.2']
+#   labels:
+#     name: 'Wifi Router'
+#     site: 'Home'

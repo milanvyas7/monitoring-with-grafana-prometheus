@@ -53,7 +53,16 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 
 echo "📁 Creating monitoring project folder structure..."
-mkdir -p /opt/monitoring-stack/{prometheus/{data,file_sd},alertmanager,grafana/data,blackbox,portainer-data,nginx/{conf.d,certs,logs}}
+mkdir -p /opt/monitoring-stack
+
+echo "Copying configuration files..."
+mv alertmanager/ /opt/monitoring-stack/
+mv blackbox/ /opt/monitoring-stack/
+mv grafana/ /opt/monitoring-stack/
+mv nginx/ /opt/monitoring-stack/
+mv portainer-data/ /opt/monitoring-stack/
+mv prometheus/ /opt/monitoring-stack/
+mv docker-compose.yml /opt/monitoring-stack/
 
 echo "🔧 Setting permissions for persistent data..."
 # Prometheus runs as UID 65534 (nobody)
@@ -61,44 +70,8 @@ sudo chmod -R 777 /opt/monitoring-stack
 sudo chown -R 65534:65534 /opt/monitoring-stack/prometheus/data
 # Grafana runs as UID 472
 sudo chown -R 472:472 /opt/monitoring-stack/grafana/data
-echo "✅ Monitoring directories created and permissions set."
+echo "✅ Monitoring directories moved and permissions set."
 
-# Determine the directory where this script resides
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-echo "Copying configuration files from $SCRIPT_DIR..."
-# Declare an associative array mapping source files to target directories
-declare -A file_map=(
-  ["docker-compose.yml"]="/opt/monitoring-stack/"
-  ["prometheus.yml"]="/opt/monitoring-stack/prometheus/"
-  ["alert.rules.yml"]="/opt/monitoring-stack/prometheus/"
-  ["alertmanager.yml"]="/opt/monitoring-stack/alertmanager/"
-  ["config.yml"]="/opt/monitoring-stack/blackbox/"
-  ["nginx-grafana.conf"]="/opt/monitoring-stack/nginx/conf.d/"
-  ["nginx-prometheus.conf"]="/opt/monitoring-stack/nginx/conf.d/"
-  ["nginx-portainer.conf"]="/opt/monitoring-stack/nginx/conf.d/"
-  ["nginx-alertmanager.conf"]="/opt/monitoring-stack/nginx/conf.d/"
-  ["nginx_access.log"]="/opt/monitoring-stack/nginx/logs/"
-  ["nginx_error.log"]="/opt/monitoring-stack/nginx/logs/"
-  ["snmp_targets.yml"]="/opt/monitoring-stack/prometheus/file_sd/"
-  ["win_targets.yml"]="/opt/monitoring-stack/prometheus/file_sd/"
-  ["node_targets.yml"]="/opt/monitoring-stack/prometheus/file_sd/"
-  ["ping_targets.yml"]="/opt/monitoring-stack/prometheus/file_sd/"
-  ["blackbox_targets.yml"]="/opt/monitoring-stack/prometheus/file_sd/"
-)
-
-# Iterate through the array and copy each file if it exists
-for file in "${!file_map[@]}"; do
-  src="$SCRIPT_DIR/$file"
-  dest="${file_map[$file]}"
-  
-  if [ -f "$src" ]; then
-    cp "$src" "$dest"
-    echo "Copied $file to $dest"
-  else
-    echo "Warning: $file not found in $SCRIPT_DIR"
-  fi
-done
 
 echo "Launching services with Docker Compose..."
 cd /opt/monitoring-stack
